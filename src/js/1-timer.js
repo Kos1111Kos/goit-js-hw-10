@@ -1,16 +1,36 @@
 import flatpickr from 'flatpickr';
 import 'flatpickr/dist/flatpickr.min.css';
 import iziToast from 'izitoast';
-
+import 'izitoast/dist/css/iziToast.min.css';
 const inputDatePicker = document.getElementById('datetime-picker');
 const startButton = document.querySelector('[data-start]');
-const timerDisplay = document.getElementById('timer');
+const daysEl = document.querySelector('[data-days]');
+const hoursEl = document.querySelector('[data-hours]');
+const minutesEl = document.querySelector('[data-minutes]');
+const secondsEl = document.querySelector('[data-seconds]');
+startButton.disabled = true;
+let timeDadline;
+const options = {
+  enableTime: true,
+  time_24hr: true,
+  defaultDate: new Date(),
+  minuteIncrement: 1,
+  onClose(selectedDates) {
+    if (selectedDates[0] < options.defaultDate) {
+      return iziToast.error({
+        message: 'Please choose a date in the future',
+      });
+    }
+    startButton.disabled = false;
+    timeDadline = selectedDates[0];
+  },
+};
 
-flatpickr(inputDatePicker);
+flatpickr(inputDatePicker, options);
 
 startButton.addEventListener('click', () => {
-  const selectedDate = new Date(inputDatePicker.value).getTime();
-  startCountdown(selectedDate);
+  startCountdown(timeDadline);
+  startButton.disabled = true;
 });
 
 let timerId; // Объявляем переменную для идентификатора таймера
@@ -21,6 +41,7 @@ function startCountdown(selectedDate) {
     const timeDifference = selectedDate - currentDate;
 
     if (timeDifference <= 0) {
+      startButton.disabled = false;
       clearInterval(timerId); // Очищаем интервал, если время истекло
       iziToast.success({ title: 'Success', message: 'Time end' });
     } else {
@@ -40,5 +61,8 @@ function formatTime(ms) {
 }
 
 function renderTime({ days, hours, minutes, seconds }) {
-  timerDisplay.textContent = `${days} days, ${hours} hours, ${minutes} minutes, ${seconds} seconds`;
+  daysEl.textContent = String(days).padStart(2, '0');
+  hoursEl.textContent = String(hours).padStart(2, '0');
+  minutesEl.textContent = String(minutes).padStart(2, '0');
+  secondsEl.textContent = String(seconds).padStart(2, '0');
 }
